@@ -161,10 +161,11 @@ def main():
         # This is for methods that run through the graph without mapping it (they choose a path)
         traverse_wiki(dictionary, final_target, start_page, method)
     elif method.startswith("assign_weights"):
-        assign_weights(dictionary, final_target)
         if method == "assign_weights_dijkstra":
-            dictionary = initialise_wiki()
+            dictionary = assign_weights2(dictionary, final_target, method)
             search_wiki(dictionary, final_target, start_page, method)
+        else:
+            assign_weights2(dictionary, final_target, method)
     else:
         # This is for methods that run through the graph in a more searching way (BFS, Djikstras, etc.)
         search_wiki(dictionary, final_target, start_page, method)
@@ -612,7 +613,7 @@ def dijkstra(dictionary, final_target, start_page, method):
 
 
 def assign_weights(dictionary, final_target):
-    # This function loops through the dictionary, assigning weights up to at least 5 clicks long, this should allow
+    # This function loops through the dictionary, assigning weights up to at least 10 clicks long, this should allow
     #  dijkstra's to function very well. I may make the clicks higher depending on how long 5 takes and how effective
     # 5 clicks is
     weight, unused_available_links = dictionary[final_target]
@@ -659,6 +660,50 @@ def assign_weights(dictionary, final_target):
             update_weights.write(">" + i + "|" + str(weight))
             for i2 in available_links:
                 update_weights.write("[" + i2)
+
+
+def assign_weights2(dictionary, final_target, method):
+    weight, unused_available_links = dictionary[final_target]
+    # If the weight of the final target is 1, then it means the file is currently set up to have the final target
+    # this means the calculations dont need to be run
+
+    # This version of assign weights should be faster as it loops through dictionary 10 times with the available links
+    # for every item. The other version loops through dictionary 10 times with available links and the search list
+    if not int(weight) == 1:
+        # This resets the weights, which is needed for when the final target is changed
+
+        for i in dictionary:
+            unused_weight, available_links = dictionary[i]
+            dictionary[i] = "2048", available_links
+
+        for clicks in range(1, 11):
+            pages_per_click = []
+            unused_weight, temp = dictionary[final_target]
+            dictionary[final_target] = 1, temp
+            for i in dictionary:
+                old_weight, available_links = dictionary[i]
+                if int(old_weight) > 2**clicks:
+                    new_weight = 2048
+                    for i2 in available_links:
+                        try:
+                            weight, unused_available_links = dictionary[i2]
+                            if int(weight) * 2 < int(new_weight):
+                                new_weight = int(weight) * 2
+                        except KeyError:
+                            weight = 0
+                    dictionary[i] = new_weight, available_links
+
+        if method == "assign_weights":
+            print("Weights assigned, storing in text file")
+            # Writes them to a file for permanent storage, even after the code stops running
+            update_weights = open("FullWeightedWiki.txt", 'w')
+            for i in dictionary:
+                weight, available_links = dictionary[i]
+                update_weights.write(">" + i + "|" + str(weight))
+                for i2 in available_links:
+                    update_weights.write("[" + i2)
+        else:
+            return dictionary
 
 
 if __name__ == '__main__':

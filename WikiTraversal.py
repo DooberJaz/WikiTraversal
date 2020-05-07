@@ -18,6 +18,7 @@ class Node:
         self.size = size
         self.parent = parent
 
+
 clicked_links = []
 
 
@@ -45,6 +46,7 @@ def main():
     # Default values
     start_page = "tree"
     final_target = "artificial intelligence"
+    method = "random"
     success = False
 
     # User input for ease of use
@@ -52,7 +54,7 @@ def main():
         print("Input a start page, leave black to use default value")
         print("Input /random to generate and use a random page")
         page = input().lower()
-        if page == "/random":
+        if page == "/random" or page == "/r":
             while not success:
                 try:
                     start_page = random.choice(list(dictionary))
@@ -78,7 +80,7 @@ def main():
         print("Input a target page, leave black to use default value")
         print("Input /random to generate and use a random page")
         page = input().lower()
-        if page == "/random":
+        if page == "/random" or page == "/r":
             while not success:
                 try:
                     final_target = random.choice(list(dictionary))
@@ -173,6 +175,7 @@ def main():
 
 def traverse_wiki(dictionary, final_target, current_page, method):
     num_broken_links = 0
+    broken_link_list = []
     weight, available_links = dictionary[current_page]
     num_clicks = 1
     global clicked_links
@@ -387,6 +390,8 @@ def weighted_bfs(dictionary, final_target, start_page, method):
     # This will only be done with one page, at present that page is: artificial intelligence
     num_broken_links = 0
     broken_link_list = []
+    available_links = []
+    weight = 0
     next_page = ""
     future_queue = deque()
     past_queue = deque()
@@ -560,6 +565,7 @@ def dijkstra(dictionary, final_target, start_page, method):
                         weight, unused_available_links = dictionary[i]
                         future_queue.append(Node(i, next_page, weight, float("inf")))
                     except KeyError:
+                        # This is just to shut the compiler up
                         exists = False
             total_clicks += 1
             queue_count = 0
@@ -592,24 +598,26 @@ def dijkstra(dictionary, final_target, start_page, method):
                     next_page = i.name
 
             unused_weight, available_links = dictionary[next_page]
-
-        print(str(total_clicks) + " pages visited")
-        back_page = temp.name
-        clicks = 1
-        click_path = [final_target]
-        while back_page != start_page:
-            click_path.append(back_page)
-            clicks += 1
-            for i in past_queue:
-                if i.name == temp.parent:
-                    temp = i
-                    break
+        if start_page == final_target:
+            print("The start page and final page are the same")
+        else:
+            print(str(total_clicks) + " pages visited")
             back_page = temp.name
+            clicks = 1
+            click_path = [final_target]
+            while back_page != start_page:
+                click_path.append(back_page)
+                clicks += 1
+                for i in past_queue:
+                    if i.name == temp.parent:
+                        temp = i
+                        break
+                back_page = temp.name
 
-        click_path.append(start_page)
-        click_path.reverse()
-        print("Found target, min clicks is: " + str(clicks))
-        print("The click path is: " + str(click_path).replace('[', '').replace('\'', '').replace(']', ''))
+            click_path.append(start_page)
+            click_path.reverse()
+            print("Found target, min clicks is: " + str(clicks))
+            print("The click path is: " + str(click_path).replace('[', '').replace('\'', '').replace(']', ''))
 
 
 def assign_weights(dictionary, final_target):
